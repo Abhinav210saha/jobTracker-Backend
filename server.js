@@ -1,11 +1,10 @@
 import express from "express";
-import users from "./data/data.js";
 import cors from "cors";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import dns from "dns";
-import User from "./model/userModel.js";
-import { publicDecrypt } from "crypto";
+import Job from "./model/jobModel.js";
+
 dns.setServers(["1.1.1.1", "8.8.8.8"]);
 
 dotenv.config();
@@ -30,43 +29,43 @@ async function connectDB(params) {
   }
 }
 
-app.get("/users", async (req, res) => {
+app.get("/jobs", async (req, res) => {
   try {
-    const users = await User.find();
-    return res.status(200).json({ message: "All Users", users: users });
+    const jobs = await Job.find();
+    return res.status(200).json({ message: "All jobs", jobs: jobs });
   } catch (error) {
-    return res.status(501).json("error while fetching users");
+    return res.status(501).json("error while fetching jobs");
   }
 });
 
-app.post("/user", async (req, res) => {
+app.post("/job", async (req, res) => {
   const { companyName, jobRole, jobType, jobStatus, salary } = req.body;
-  console.log(companyName, jobRole, jobType, jobStatus, salary);
+//   console.log(companyName, jobRole, jobType, jobStatus, salary);
 
   try {
-    const user = await User.create({
+    const newJob = await Job.create({
       companyName,
       jobRole,
       jobType,
       jobStatus,
       salary,
     });
-    return res.status(201).json({ message: "User created", user: user });
+    return res.status(201).json({ message: "Job created", newJob: newJob });
   } catch (error) {
     console.log(error);
     return res
       .status(500)
-      .json({ message: "error while creating user", error: error });
+      .json({ message: "error while creating Job", error: error });
   }
 });
 
-app.put("/user/update/:id", async (req, res) => {
+app.put("/job/update/:id", async (req, res) => {
   try {
     const { companyName, jobRole, jobType, jobStatus, salary } = req.body;
     // console.log(companyName, jobRole, jobType, jobStatus, salary )
     let id = req.params.id;
     // console.log(id)
-    let user = await User.findByIdAndUpdate(id, {
+    let updatedJob = await Job.findByIdAndUpdate(id, {
       companyName,
       jobRole,
       jobType,
@@ -74,11 +73,31 @@ app.put("/user/update/:id", async (req, res) => {
       salary,
     },{returnDocument: 'after'}); //  returnDocument:'after' use beacuse we want instant update and send updated data to client
 
-    return res.status(200).json({ mesage: "Update Successfully", user: user  });
+    return res.status(200).json({ mesage: "Update Successfully", updatedJob:updatedJob  });
   } catch (error) {
     return res.status(400).json({ error: error });
   }
 });
+
+app.delete("/job/delete/:id",async(req,res)=>{
+
+    try {
+        const id=req.params.id
+      
+        const job= await Job.findByIdAndDelete(id)
+
+        if(!job){
+            return res.status(400).send("job not found")
+        }
+        
+        return res.status(200).json({message:"job deleted",deletedJob:job})
+
+    } catch (error) {
+
+        return res.status(400).json({message:"Error while delteting job"})
+        
+    }
+})
 
 app.listen(3000, () => {
   connectDB();
